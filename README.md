@@ -1,2 +1,2 @@
-# passcualina (Work in progress)
+# passcualito (Work in progress)
 Simple Password Manager for Linux

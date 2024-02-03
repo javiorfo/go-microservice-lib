@@ -1,0 +1,10 @@
+[package]
+name = "passcualito"
+version = "0.1.0"
+edition = "2021"
+authors = ["Javier Orfo"]
+categories = ["Password Manager"]
+license = "MIT"
+description = "Minimal boludo password manager"
+
+[dependencies]

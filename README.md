@@ -1,2 +1,2 @@
 # passcualito (Work in progress)
-Simple Password Manager for Linux
+Dumb Password Manager for Linux

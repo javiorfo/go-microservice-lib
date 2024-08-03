@@ -1,3 +1,3 @@
-module github.com/javiorfo/passcualito
+module github.com/javiorfo/go-microservice-lib
 
-go 1.22.3
+go 1.22.5

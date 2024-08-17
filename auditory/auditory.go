@@ -6,7 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Auditable creates data fields for recording auditory
+// @Model Auditable
+// @Description creates data fields for recording auditory
+// @ID auditory.Auditable
 type Auditable struct {
 	CreatedBy      string     `json:"-"`
 	LastModifiedBy *string    `json:"-"`

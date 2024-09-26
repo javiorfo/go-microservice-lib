@@ -68,6 +68,7 @@ func (kc KeycloakConfig) SecureWithRoles(roles ...string) fiber.Handler {
 type customClaims struct {
 	ResourceAccess    map[string]any `json:"resource_access"`
 	PreferredUsername string         `json:"preferred_username"`
+	Aud               string         `json:"aud"`
 	jwt.StandardClaims
 }
 

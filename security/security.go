@@ -55,7 +55,7 @@ func (kc KeycloakConfig) SecureWithRoles(roles ...string) fiber.Handler {
 		if user, err := userHasRole(kc.ClientID, token, roles); err != nil {
 			unauthorizedRoleError := response.NewRestResponseError(c, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
-				Message: "User does not have permission to access",
+				Message: err.Error(),
 			})
 			return c.Status(http.StatusUnauthorized).JSON(unauthorizedRoleError)
 		} else {
@@ -68,7 +68,7 @@ func (kc KeycloakConfig) SecureWithRoles(roles ...string) fiber.Handler {
 type customClaims struct {
 	ResourceAccess    map[string]any `json:"resource_access"`
 	PreferredUsername string         `json:"preferred_username"`
-	Aud               string         `json:"aud"`
+	Aud               []string         `json:"aud"`
 	jwt.StandardClaims
 }
 
@@ -99,7 +99,7 @@ func userHasRole(clientID, tokenStr string, roles []string) (*string, error) {
 				}
 			}
 		}
-		return nil, fmt.Errorf("Error searching client roles")
+		return nil, fmt.Errorf("User does not have permission to access")
 	}
 
 	return nil, fmt.Errorf("No roles found for resource key %s", clientID)

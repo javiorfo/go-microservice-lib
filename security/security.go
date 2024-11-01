@@ -1,6 +1,7 @@
 package security
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,11 +20,25 @@ type Securizer interface {
 }
 
 type KeycloakConfig struct {
-	Keycloak     *gocloak.GoCloak
-	Realm        string
-	ClientID     string
-	ClientSecret string
-	Enabled      bool
+	Keycloak       *gocloak.GoCloak
+	Realm          string
+	ClientID       string
+	ClientSecret   string
+	AdminRealmUser *KeycloakAdminRealmUser
+	Enabled        bool
+}
+
+type KeycloakAdminRealmUser struct {
+	Username string
+	Password string
+}
+
+type SimpleUser struct {
+	Username string
+	Password string
+	FistName string
+	LastName string
+	Email    string
 }
 
 func (kc KeycloakConfig) SecureWithRoles(roles ...string) fiber.Handler {
@@ -65,10 +80,44 @@ func (kc KeycloakConfig) SecureWithRoles(roles ...string) fiber.Handler {
 	}
 }
 
+func (kc KeycloakConfig) CreateUser(c *fiber.Ctx, simpleUser SimpleUser) error {
+	log.Infof("%s Creating user: %s", tracing.LogTraceAndSpan(c), simpleUser.Username)
+
+	if kc.AdminRealmUser == nil {
+		return errors.New("AdminRealmUser is not set")
+	}
+
+	token, err := kc.Keycloak.LoginAdmin(c.Context(), kc.AdminRealmUser.Username, kc.AdminRealmUser.Password, kc.Realm)
+	if err != nil {
+		return fmt.Errorf("Error logging Admin Realm User: %v\n", err)
+	}
+
+	user := gocloak.User{
+		Username:  gocloak.StringP(simpleUser.Username),
+		FirstName: gocloak.StringP(simpleUser.FistName),
+		LastName:  gocloak.StringP(simpleUser.LastName),
+		Email:     gocloak.StringP(simpleUser.Email),
+		Enabled:   gocloak.BoolP(true),
+	}
+
+	createdUserID, err := kc.Keycloak.CreateUser(c.Context(), token.AccessToken, kc.Realm, user)
+	if err != nil {
+		return fmt.Errorf("Error creating user: %v\n", err)
+	}
+
+	err = kc.Keycloak.SetPassword(c.Context(), token.AccessToken, createdUserID, kc.Realm, simpleUser.Password, true)
+	if err != nil {
+		return fmt.Errorf("Error setting password: %v\n", err)
+	}
+
+	log.Infof("%s User created and password set successfully. Keycloak UserID %s", tracing.LogTraceAndSpan(c), createdUserID)
+	return nil
+}
+
 type customClaims struct {
 	ResourceAccess    map[string]any `json:"resource_access"`
 	PreferredUsername string         `json:"preferred_username"`
-	Aud               []string         `json:"aud"`
+	Aud               []string       `json:"aud"`
 	jwt.StandardClaims
 }
 

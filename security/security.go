@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/Nerzal/gocloak/v13"
@@ -13,6 +14,7 @@ import (
 	"github.com/javiorfo/go-microservice-lib/response"
 	"github.com/javiorfo/go-microservice-lib/response/codes"
 	"github.com/javiorfo/go-microservice-lib/tracing"
+	"github.com/javiorfo/steams"
 )
 
 type Securizer interface {
@@ -141,15 +143,17 @@ func userHasRole(clientID, tokenStr string, roles []string) (*string, error) {
 	resourceMap := resourceData.(map[string]any)
 	clientRoles := resourceMap["roles"].([]any)
 	if len(clientRoles) > 0 {
-		for _, cr := range clientRoles {
-			for _, r := range roles {
-				if r == cr.(string) {
-					return &claims.PreferredUsername, nil
-				}
-			}
+		if steams.OfSlice(roles).AnyMatch(filterRole(clientRoles)) {
+			return &claims.PreferredUsername, nil
 		}
 		return nil, fmt.Errorf("User does not have permission to access")
 	}
 
 	return nil, fmt.Errorf("No roles found for resource key %s", clientID)
+}
+
+func filterRole(clientRoles []any) func(string) bool {
+	return func(role string) bool {
+		return slices.Contains(clientRoles, any(role))
+	}
 }

@@ -1,11 +1,21 @@
 package env
 
-import "os"
+import (
+	"encoding/json"
+	"os"
+)
 
-func GetEnvOrDefault(envVar, fallback string) string {
+func GetEnvOr[T any](envVar string, fallback T) T {
 	value, exists := os.LookupEnv(envVar)
 	if !exists {
 		return fallback
 	}
-	return value
+
+	var result T
+	err := json.Unmarshal([]byte(value), &result)
+	if err != nil {
+		return fallback
+	}
+
+	return result
 }

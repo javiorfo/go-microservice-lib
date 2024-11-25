@@ -5,11 +5,9 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/javiorfo/go-microservice-lib/response"
 	"github.com/javiorfo/go-microservice-lib/response/codes"
-	"github.com/javiorfo/go-microservice-lib/tracing"
 	"github.com/javiorfo/steams"
 )
 
@@ -20,15 +18,15 @@ type TokenConfig struct {
 }
 
 type TokenClaims struct {
-	Username    string              `json:"username"`
-	Issuer      string              `json:"iss"`
 	Permissions map[string][]string `json:"permissions"`
+	Audience    string              `json:"aud"`
 	jwt.RegisteredClaims
 }
 
+// Secure method with role validation. If no role is specified
+// no role validation is executed
 func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		log.Infof("%s Path captured: %s", tracing.LogTraceAndSpan(c), c.Path())
 		if !t.Enabled {
 			return c.Next()
 		}
@@ -50,16 +48,16 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 		if err != nil || !token.Valid {
 			invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
-				Message: "Invalid token",
+				Message: "Invalid or expired token",
 			})
 			return c.Status(fiber.StatusUnauthorized).JSON(invalidTokenError)
 		}
 
 		claims, ok := token.Claims.(*TokenClaims)
-		if !ok {
+		if !ok { 
 			invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
-				Message: "Invalid or expired token",
+				Message: "Invalid token",
 			})
 			return c.Status(fiber.StatusUnauthorized).JSON(invalidTokenError)
 		}
@@ -74,7 +72,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 			}
 		}
 
-		c.Locals("tokenUser", claims.Username)
+		c.Locals("tokenUser", claims.Subject)
 		return c.Next()
 	}
 }

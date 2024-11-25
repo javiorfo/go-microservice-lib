@@ -4,6 +4,7 @@
 ## Dependencies
 - Web: Fiber
 - OAuth2: Gocloak
+- JWT token: JWT-go
 - Tracing: Opentelemetry
 - ORM: Gorm
 
@@ -11,7 +12,7 @@
 - Auditory
 - Pagination and sorting
 - Custom responses and errors
-- Security with Keycloak
+- Security with Keycloak or simple JWT token
 - Tracing with OpenTelemetry
 
 ## Installation

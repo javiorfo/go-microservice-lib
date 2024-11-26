@@ -18,9 +18,14 @@ type TokenConfig struct {
 }
 
 type TokenClaims struct {
-	Permissions map[string][]string `json:"permissions"`
-	Audience    string              `json:"aud"`
+	Permission TokenPermission `json:"permission"`
+	Audience   string          `json:"aud"`
 	jwt.RegisteredClaims
+}
+
+type TokenPermission struct {
+	Name  string   `json:"name"`
+	Roles []string `json:"roles"`
 }
 
 // Secure method with role validation. If no role is specified
@@ -54,7 +59,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 		}
 
 		claims, ok := token.Claims.(*TokenClaims)
-		if !ok { 
+		if !ok {
 			invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
 				Message: "Invalid token",
@@ -63,7 +68,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 		}
 
 		if len(roles) > 0 {
-			if ok := hasRole(claims.Permissions, roles); !ok {
+			if ok := hasRole(claims.Permission, roles); !ok {
 				invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
 					Code:    codes.AUTH_ERROR,
 					Message: "User does not have permission to access",
@@ -77,10 +82,8 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 	}
 }
 
-func hasRole(permissions map[string][]string, roles []string) bool {
-	return steams.OfMap(permissions).ValuesToSteam().AnyMatch(func(param []string) bool {
-		return steams.OfSlice(roles).AnyMatch(func(r string) bool {
-			return slices.Contains(param, r)
-		})
+func hasRole(permission TokenPermission, roles []string) bool {
+	return steams.OfSlice(roles).AnyMatch(func(r string) bool {
+		return slices.Contains(permission.Roles, r)
 	})
 }

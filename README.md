@@ -7,6 +7,7 @@
 - JWT token: JWT-go
 - Tracing: Opentelemetry
 - ORM: Gorm
+- ENV: Godot
 
 ## Features
 - Auditory

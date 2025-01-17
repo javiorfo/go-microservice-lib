@@ -7,10 +7,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func GetEnvOr[T any](envVar string, fallback T) T {
-    // Uses .env file if exists, if not, get the fallback
-    _ = godotenv.Load()
+func init() {
+	// Uses .env file if exists, if not, get the fallback
+	_ = godotenv.Load()
+}
 
+func GetEnvOr[T any](envVar string, fallback T) T {
 	value, exists := os.LookupEnv(envVar)
 	if !exists {
 		return fallback

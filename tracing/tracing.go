@@ -3,6 +3,8 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -60,4 +62,12 @@ func GetContextPropagator(c *fiber.Ctx) context.Context {
 
 func LogTraceAndSpan(span oTrace.Span) string {
 	return fmt.Sprintf("[traceID: %s, spanID: %s]", span.SpanContext().TraceID(), span.SpanContext().SpanID())
+}
+
+func Name() string {
+	pc, _, _, _ := runtime.Caller(1)
+	funcName := runtime.FuncForPC(pc).Name()
+	lastPeriodIndex := strings.LastIndex(funcName, ".")
+	s, _ := strings.CutPrefix(funcName[lastPeriodIndex+1:], "New")
+	return s
 }

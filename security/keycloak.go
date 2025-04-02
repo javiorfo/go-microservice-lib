@@ -15,7 +15,10 @@ import (
 	"github.com/javiorfo/go-microservice-lib/response/codes"
 	"github.com/javiorfo/go-microservice-lib/tracing"
 	"github.com/javiorfo/steams"
+	"go.opentelemetry.io/otel"
 )
+
+var keycloakTracer = otel.Tracer("Security")
 
 type KeycloakConfig struct {
 	Keycloak       *gocloak.GoCloak
@@ -41,14 +44,17 @@ type KeycloakSimpleUser struct {
 
 func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		log.Infof("%s Path captured: %s", tracing.LogTraceAndSpan(c), c.Path())
+		_, span := keycloakTracer.Start(c.UserContext(), "secure")
+		defer span.End()
+
+		log.Infof("%s Path captured: %s", tracing.LogTraceAndSpan(span), c.Path())
 		if !kc.Enabled {
 			return c.Next()
 		}
 
 		authHeader := c.Get("Authorization")
 		if authHeader == "" || !strings.Contains(authHeader, "Bearer") {
-			authorizationHeaderError := response.NewRestResponseError(c, response.ResponseError{
+			authorizationHeaderError := response.NewRestResponseError(span, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
 				Message: "Authorization header or Bearer missing",
 			})
@@ -58,7 +64,7 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		rptResult, err := kc.Keycloak.RetrospectToken(c.Context(), token, kc.ClientID, kc.ClientSecret, kc.Realm)
 		if err != nil || !*rptResult.Active {
-			invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
+			invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
 				Message: "Invalid or expired token",
 			})
@@ -66,7 +72,7 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 		}
 
 		if user, err := userHasRole(kc.ClientID, token, roles); err != nil {
-			unauthorizedRoleError := response.NewRestResponseError(c, response.ResponseError{
+			unauthorizedRoleError := response.NewRestResponseError(span, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
 				Message: err.Error(),
 			})
@@ -79,7 +85,10 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 }
 
 func (kc KeycloakConfig) CreateUser(c *fiber.Ctx, simpleUser KeycloakSimpleUser) error {
-	log.Infof("%s Creating user: %s", tracing.LogTraceAndSpan(c), simpleUser.Username)
+	_, span := keycloakTracer.Start(c.UserContext(), "CreateUser")
+	defer span.End()
+
+	log.Infof("%s Creating user: %s", tracing.LogTraceAndSpan(span), simpleUser.Username)
 
 	if kc.AdminRealmUser == nil {
 		return errors.New("AdminRealmUser is not set")
@@ -108,7 +117,7 @@ func (kc KeycloakConfig) CreateUser(c *fiber.Ctx, simpleUser KeycloakSimpleUser)
 		return fmt.Errorf("Error setting password: %v\n", err)
 	}
 
-	log.Infof("%s User created and password set successfully. Keycloak UserID %s", tracing.LogTraceAndSpan(c), createdUserID)
+	log.Infof("%s User created and password set successfully. Keycloak UserID %s", tracing.LogTraceAndSpan(span), createdUserID)
 	return nil
 }
 

@@ -9,7 +9,10 @@ import (
 	"github.com/javiorfo/go-microservice-lib/response"
 	"github.com/javiorfo/go-microservice-lib/response/codes"
 	"github.com/javiorfo/steams"
+	"go.opentelemetry.io/otel"
 )
+
+var jwtTracer = otel.Tracer("JWT")
 
 type TokenConfig struct {
 	SecretKey []byte
@@ -32,13 +35,16 @@ type TokenPermission struct {
 // no role validation is executed
 func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		_, span := keycloakTracer.Start(c.UserContext(), "secure")
+		defer span.End()
+
 		if !t.Enabled {
 			return c.Next()
 		}
 
 		authHeader := c.Get("Authorization")
 		if authHeader == "" || !strings.Contains(authHeader, "Bearer") {
-			authorizationHeaderError := response.NewRestResponseError(c, response.ResponseError{
+			authorizationHeaderError := response.NewRestResponseError(span, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
 				Message: "Authorization header or Bearer missing",
 			})
@@ -51,7 +57,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
+			invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
 				Message: "Invalid or expired token",
 			})
@@ -60,7 +66,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 
 		claims, ok := token.Claims.(*TokenClaims)
 		if !ok {
-			invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
+			invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
 				Code:    codes.AUTH_ERROR,
 				Message: "Invalid token",
 			})
@@ -69,7 +75,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 
 		if len(roles) > 0 {
 			if ok := hasRole(claims.Permission, roles); !ok {
-				invalidTokenError := response.NewRestResponseError(c, response.ResponseError{
+				invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
 					Code:    codes.AUTH_ERROR,
 					Message: "User does not have permission to access",
 				})

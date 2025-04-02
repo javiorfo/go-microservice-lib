@@ -9,9 +9,11 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	oTrace "go.opentelemetry.io/otel/trace"
 )
 
 func StartTracing(host, appName string) (*trace.TracerProvider, error) {
@@ -47,10 +49,15 @@ func StartTracing(host, appName string) (*trace.TracerProvider, error) {
 	)
 
 	otel.SetTracerProvider(tracerprovider)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
 	return tracerprovider, nil
 }
 
-func LogTraceAndSpan(c *fiber.Ctx) string {
-	return fmt.Sprintf("[traceID: %s, spanID: %s]", c.Locals("traceID"), c.Locals("spanID"))
+func GetContextPropagator(c *fiber.Ctx) context.Context {
+	return otel.GetTextMapPropagator().Extract(c.UserContext(), propagation.HeaderCarrier(c.GetReqHeaders()))
+}
+
+func LogTraceAndSpan(span oTrace.Span) string {
+	return fmt.Sprintf("[traceID: %s, spanID: %s]", span.SpanContext().TraceID(), span.SpanContext().SpanID())
 }

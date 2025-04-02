@@ -15,6 +15,7 @@
 - Custom responses and errors
 - Security with Keycloak or simple JWT token
 - Tracing with OpenTelemetry
+- Client Http to transport trace and context
 
 ## Installation
 ```bash

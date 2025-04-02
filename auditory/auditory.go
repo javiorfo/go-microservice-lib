@@ -8,9 +8,9 @@ import (
 // @Description creates data fields for recording auditory
 // @ID auditory.Auditable
 type Auditable struct {
-	CreatedBy      string     `json:"-" bson:"createdBy"`
+	CreatedBy      string     `json:"-" gorm:"not null" bson:"createdBy"`
 	LastModifiedBy *string    `json:"-" bson:"lastModifiedBy"`
-	CreateDate     time.Time  `json:"-" gorm:"autoCreateTime" bson:"createDate"`
+	CreateDate     time.Time  `json:"-" gorm:"autoCreateTime;not null" bson:"createDate"`
 	LastModified   *time.Time `json:"-" gorm:"autoUpdateTime" bson:"lastModified"`
 }
 

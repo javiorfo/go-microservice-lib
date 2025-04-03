@@ -14,7 +14,7 @@ import (
 
 type headers map[string]string
 
-type Sender[T any] interface {
+type Client[T any] interface {
 	Send() (*Response[T], error)
 }
 

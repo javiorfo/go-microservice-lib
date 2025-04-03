@@ -13,8 +13,28 @@ type data struct {
 }
 
 func TestIntegrationGet(t *testing.T) {
-	resp, err := NewClient[data](context.Background(), "https://jsonplaceholder.typicode.com/todos/1").
-		WithJsonHeaders().Send()
+	client := NewHttpClient[data]()
+	resp, err := client.Send(NewRequest(context.Background(), "https://jsonplaceholder.typicode.com/todos/1", WithJsonHeaders()))
+
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if resp.Error != nil {
+		t.Error(resp.Error)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Status code must be 200. Got %d", resp.StatusCode)
+	}
+}
+
+func TestIntegrationInterface(t *testing.T) {
+	receiver := func(c Client[RawData]) (*Response[RawData], error) {
+		return c.Send(NewRequest(context.Background(), "https://jsonplaceholder.typicode.com/todos/1"))
+	}
+
+	resp, err := receiver(NewHttpClient[RawData]())
 
 	if err != nil {
 		t.Error(err.Error())
@@ -30,8 +50,8 @@ func TestIntegrationGet(t *testing.T) {
 }
 
 func TestIntegrationGetError(t *testing.T) {
-	_, err := NewClient[data](context.Background(), "https://jsonplaceholde/1").
-		WithJsonHeaders().Send()
+	client := NewHttpClient[data]()
+	_, err := client.Send(NewRequest(context.Background(), "https://jsonplaceholde/1", WithJsonHeaders()))
 
 	if err == nil {
 		t.Fatal("Must be an error")
@@ -39,12 +59,9 @@ func TestIntegrationGetError(t *testing.T) {
 }
 
 func TestIntegrationPost(t *testing.T) {
-	resp, err := NewClientRaw(context.Background(), "https://jsonplaceholder.typicode.com/posts").
-		Method(http.MethodPost).
-		Header("Authorization", "mock_token").
-		Body(data{UserId: 100, Title: "test"}).
-		WithJsonHeaders().
-		Send()
+	client := NewHttpClient[RawData]()
+	resp, err := client.Send(NewRequest(context.Background(), "https://jsonplaceholder.typicode.com/posts", WithMethod(http.MethodPost),
+		WithHeader("Authorization", "mock_token"), WithBody(data{UserId: 100, Title: "test"}), WithJsonHeaders()))
 
 	if err != nil {
 		t.Error(err.Error())

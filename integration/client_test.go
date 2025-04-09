@@ -60,8 +60,12 @@ func TestIntegrationGetError(t *testing.T) {
 
 func TestIntegrationPost(t *testing.T) {
 	client := NewHttpClient[RawData]()
-	resp, err := client.Send(NewRequest(context.Background(), "https://jsonplaceholder.typicode.com/posts", WithMethod(http.MethodPost),
-		WithHeader("Authorization", "mock_token"), WithBody(data{UserId: 100, Title: "test"}), WithJsonHeaders()))
+	resp, err := client.Send(NewRequest(context.Background(), "https://jsonplaceholder.typicode.com/posts",
+		WithMethod(http.MethodPost),
+		WithHeader("Authorization", "mock_token"),
+		WithBody(data{UserId: 100, Title: "test"}),
+		WithJsonHeaders(),
+	))
 
 	if err != nil {
 		t.Error(err.Error())

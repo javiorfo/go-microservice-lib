@@ -1,21 +1,119 @@
 package integration
 
+import (
+	"context"
+	"time"
+
+	"github.com/gofiber/fiber/v2/log"
+	"github.com/google/uuid"
+	"github.com/javiorfo/nilo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
 type Async interface {
 	Execute(request)
 }
 
+type Try int
+type state string
+
 type asyncClient struct {
-	tries int
-	db    string
+	try        Try
+	collection *mongo.Collection
+	client     Client[RawData]
+}
+
+func NewAsyncHttpClient(collection *mongo.Collection, try Try) Async {
+	return &asyncClient{collection: collection, try: try, client: NewHttpClient[RawData]()}
 }
 
 func (a *asyncClient) Execute(r request) {
 	go func() {
-		client := NewHttpClient[RawData]()
-		for range a.tries {
-			resp, err := client.Send(r)
-			_ = resp
-			_ = err
+		code := uuid.NewString()
+		defer func() {
+			log.Infof("async %s execution terminated", code)
+			if r := recover(); r != nil {
+				log.Errorf("async %s. Panic: %v", code, r)
+			}
+		}()
+
+		model, err := a.create(r.ctx, newAsyncModel(code, r.url, r.body))
+		if err != nil {
+			log.Errorf("async %s. Error creating mongo model: %v", code, err)
+			return
+		}
+		log.Infof("async %s. Created: %#v", code, model)
+
+		for i := range a.try {
+			log.Infof("async %s. Try %d: %s", code, i+1, r.url)
+			resp, err := a.client.Send(r)
+
+			if err != nil || resp.Error != nil {
+				errStr := nilo.OfPointer(resp).MapToString(func(r Response[RawData]) string {
+					return r.ErrorToJson().OrElse("No error response available")
+				}).OrElse(err.Error())
+
+				log.Errorf("async %s. Try %d. Error executing request: %v", code, i+1, errStr)
+
+				if err := a.update(r.ctx, model, "ERROR", errStr); err != nil {
+					log.Errorf("async %s. Try %d. Error setting error mongo model: %v", code, i+1, err)
+					return
+				}
+
+				time.Sleep(3 * time.Second)
+				continue
+			}
+
+			if err = a.update(r.ctx, model, "OK", resp.DataToJson().OrElse("No response available")); err != nil {
+				log.Errorf("async %s. Try %d. Error updating mongo model: %v", code, i+1, err)
+			}
+			return
 		}
 	}()
+}
+
+type asyncModel struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	code     string             `bson:"code"`
+	endpoint string             `bson:"endpoint"`
+	body     string             `bson:"body"`
+	state    state              `bson:"state"`
+	response string             `bson:"response"`
+	date     time.Time          `bson:"date"`
+}
+
+func newAsyncModel(code, endpoint string, body *[]byte) asyncModel {
+	return asyncModel{
+		ID:       primitive.NewObjectID(),
+		code:     code,
+		endpoint: endpoint,
+		body:     string(*body),
+		state:    "PROCESSING",
+		date:     time.Now(),
+	}
+}
+
+func (a asyncClient) create(ctx context.Context, am asyncModel) (asyncModel, error) {
+	_, err := a.collection.InsertOne(ctx, am)
+	if err != nil {
+		return am, err
+	}
+	return am, nil
+}
+
+func (a asyncClient) update(ctx context.Context, am asyncModel, state state, response string) error {
+	filter := bson.M{"_id": am.ID}
+
+	am.state = state
+	am.response = response
+
+	update := bson.M{"$set": am}
+
+	_, err := a.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
 }

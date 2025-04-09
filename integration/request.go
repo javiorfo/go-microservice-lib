@@ -18,42 +18,42 @@ type request struct {
 	err     error
 }
 
-type option struct {
+type requestOption struct {
 	method  string
 	headers headers
 	body    *[]byte
 	err     error
 }
 
-type RequestOptions func(*option)
+type RequestOptions func(*requestOption)
 
 func WithMethod(method string) RequestOptions {
-	return func(o *option) {
+	return func(o *requestOption) {
 		o.method = method
 	}
 }
 
 func WithHeader(name, value string) RequestOptions {
-	return func(o *option) {
+	return func(o *requestOption) {
 		o.headers[name] = value
 	}
 }
 
 func WithCorrelationID() RequestOptions {
-	return func(o *option) {
+	return func(o *requestOption) {
 		o.headers["x-correlation-id"] = uuid.NewString()
 	}
 }
 
 func WithJsonHeaders() RequestOptions {
-	return func(o *option) {
+	return func(o *requestOption) {
 		o.headers["Content-Type"] = "application/json"
 		o.headers["Accept"] = "application/json"
 	}
 }
 
 func WithBody(body any) RequestOptions {
-	return func(o *option) {
+	return func(o *requestOption) {
 		body, err := json.Marshal(body)
 		if err != nil {
 			o.err = err
@@ -64,7 +64,7 @@ func WithBody(body any) RequestOptions {
 }
 
 func NewRequest(context context.Context, url string, options ...RequestOptions) request {
-	opts := option{
+	opts := requestOption{
 		headers: make(headers),
 	}
 

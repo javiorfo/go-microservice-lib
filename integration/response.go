@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/javiorfo/nilo"
@@ -31,4 +32,23 @@ func (r Response[T]) ValueFromJsonField(jsonField string) nilo.Optional[any] {
 	}
 
 	return nilo.Of(result)
+}
+
+func (r Response[T]) ErrorToJson() nilo.Optional[string] {
+	if r.Error == nil {
+		return nilo.Empty[string]()
+	}
+	jsonBytes, err := json.Marshal(r.Error)
+	if err != nil {
+		return nilo.Empty[string]()
+	}
+	return nilo.Of(string(jsonBytes))
+}
+
+func (r Response[T]) DataToJson() nilo.Optional[string] {
+	jsonBytes, err := json.Marshal(*r.Data)
+	if err != nil {
+		return nilo.Empty[string]()
+	}
+	return nilo.Of(string(jsonBytes))
 }

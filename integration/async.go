@@ -44,7 +44,7 @@ func (a *asyncClient) Execute(r Request) {
 			log.Errorf("async %s. Error creating mongo model: %v", code, err)
 			return
 		}
-		log.Infof("async %s. Created: %#v", code, model)
+		log.Infof("async %s. Created", code)
 
 		for i := range a.try {
 			log.Infof("async %s. Try %d: %s", code, i+1, r.url)
@@ -68,6 +68,8 @@ func (a *asyncClient) Execute(r Request) {
 
 			if err = a.update(r.ctx, model, "OK", resp.DataToJson().OrElse("No response available")); err != nil {
 				log.Errorf("async %s. Try %d. Error updating mongo model: %v", code, i+1, err)
+			} else {
+				log.Infof("async %s. Try %d. Succeded", code, i+1)
 			}
 			return
 		}
@@ -76,22 +78,22 @@ func (a *asyncClient) Execute(r Request) {
 
 type asyncModel struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	code     string             `bson:"code"`
-	endpoint string             `bson:"endpoint"`
-	body     string             `bson:"body"`
-	state    state              `bson:"state"`
-	response string             `bson:"response"`
-	date     time.Time          `bson:"date"`
+	Code     string             `bson:"code"`
+	Endpoint string             `bson:"endpoint"`
+	Body     string             `bson:"body"`
+	State    state              `bson:"state"`
+	Response string             `bson:"response"`
+	Date     time.Time          `bson:"date"`
 }
 
 func newAsyncModel(code, endpoint string, body *[]byte) asyncModel {
 	return asyncModel{
 		ID:       primitive.NewObjectID(),
-		code:     code,
-		endpoint: endpoint,
-		body:     string(*body),
-		state:    "PROCESSING",
-		date:     time.Now(),
+		Code:     code,
+		Endpoint: endpoint,
+		Body:     string(*body),
+		State:    "PROCESSING",
+		Date:     time.Now(),
 	}
 }
 
@@ -106,8 +108,8 @@ func (a asyncClient) create(ctx context.Context, am asyncModel) (asyncModel, err
 func (a asyncClient) update(ctx context.Context, am asyncModel, state state, response string) error {
 	filter := bson.M{"_id": am.ID}
 
-	am.state = state
-	am.response = response
+	am.State = state
+	am.Response = response
 
 	update := bson.M{"$set": am}
 

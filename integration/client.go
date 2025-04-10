@@ -11,7 +11,7 @@ import (
 )
 
 type Client[T any] interface {
-	Send(request) (*Response[T], error)
+	Send(Request) (*Response[T], error)
 }
 
 type client[T any] struct {
@@ -31,7 +31,7 @@ func NewHttpClientWithTimeout[T any](timeout time.Duration) client[T] {
 	}
 }
 
-func (c client[T]) Send(req request) (*Response[T], error) {
+func (c client[T]) Send(req Request) (*Response[T], error) {
 	if req.err != nil {
 		return nil, req.err
 	}

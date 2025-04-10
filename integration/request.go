@@ -9,7 +9,7 @@ import (
 
 type headers map[string]string
 
-type request struct {
+type Request struct {
 	ctx     context.Context
 	url     string
 	method  string
@@ -63,7 +63,7 @@ func WithBody(body any) RequestOptions {
 	}
 }
 
-func NewRequest(context context.Context, url string, options ...RequestOptions) request {
+func NewRequest(context context.Context, url string, options ...RequestOptions) Request {
 	opts := requestOption{
 		headers: make(headers),
 	}
@@ -72,7 +72,7 @@ func NewRequest(context context.Context, url string, options ...RequestOptions) 
 		opt(&opts)
 	}
 
-	return request{
+	return Request{
 		ctx:     context,
 		url:     url,
 		headers: opts.headers,

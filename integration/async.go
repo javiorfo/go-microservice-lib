@@ -13,7 +13,7 @@ import (
 )
 
 type Async interface {
-	Execute(request)
+	Execute(Request)
 }
 
 type Try int
@@ -29,7 +29,7 @@ func NewAsyncHttpClient(collection *mongo.Collection, try Try) Async {
 	return &asyncClient{collection: collection, try: try, client: NewHttpClient[RawData]()}
 }
 
-func (a *asyncClient) Execute(r request) {
+func (a *asyncClient) Execute(r Request) {
 	go func() {
 		code := uuid.NewString()
 		defer func() {

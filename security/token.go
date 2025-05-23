@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/javiorfo/go-microservice-lib/response"
-	"github.com/javiorfo/go-microservice-lib/response/codes"
 	"github.com/javiorfo/steams"
 	"go.opentelemetry.io/otel"
 )
@@ -45,7 +44,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" || !strings.Contains(authHeader, "Bearer") {
 			authorizationHeaderError := response.NewRestResponseError(span, response.ResponseError{
-				Code:    codes.AUTH_ERROR,
+				Code:    "AUTH_ERROR",
 				Message: "Authorization header or Bearer missing",
 			})
 			return c.Status(fiber.StatusUnauthorized).JSON(authorizationHeaderError)
@@ -58,7 +57,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 
 		if err != nil || !token.Valid {
 			invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
-				Code:    codes.AUTH_ERROR,
+				Code:    "AUTH_ERROR",
 				Message: "Invalid or expired token",
 			})
 			return c.Status(fiber.StatusUnauthorized).JSON(invalidTokenError)
@@ -67,7 +66,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 		claims, ok := token.Claims.(*TokenClaims)
 		if !ok {
 			invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
-				Code:    codes.AUTH_ERROR,
+				Code:    "AUTH_ERROR",
 				Message: "Invalid token",
 			})
 			return c.Status(fiber.StatusUnauthorized).JSON(invalidTokenError)
@@ -76,7 +75,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 		if len(roles) > 0 {
 			if ok := hasRole(claims.Permission, roles); !ok {
 				invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
-					Code:    codes.AUTH_ERROR,
+					Code:    "AUTH_ERROR",
 					Message: "User does not have permission to access",
 				})
 				return c.Status(fiber.StatusUnauthorized).JSON(invalidTokenError)

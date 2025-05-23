@@ -2,7 +2,6 @@ package response
 
 import (
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/javiorfo/go-microservice-lib/response/codes"
 	"github.com/javiorfo/go-microservice-lib/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -58,5 +57,5 @@ func NewRestResponseErrorWithCodeAndMsg(span trace.Span, code, msg string) *Rest
 
 // InternalServerError creates a generic internal server error response
 func InternalServerError(span trace.Span, msg string) *RestResponseError {
-	return NewRestResponseError(span, ResponseError{codes.INTERNAL_ERROR, msg})
+	return NewRestResponseError(span, ResponseError{"INTERNAL_ERROR", msg})
 }

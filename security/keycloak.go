@@ -12,7 +12,6 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt"
 	"github.com/javiorfo/go-microservice-lib/response"
-	"github.com/javiorfo/go-microservice-lib/response/codes"
 	"github.com/javiorfo/go-microservice-lib/tracing"
 	"github.com/javiorfo/steams"
 	"go.opentelemetry.io/otel"
@@ -55,7 +54,7 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" || !strings.Contains(authHeader, "Bearer") {
 			authorizationHeaderError := response.NewRestResponseError(span, response.ResponseError{
-				Code:    codes.AUTH_ERROR,
+				Code:    "AUTH_ERROR",
 				Message: "Authorization header or Bearer missing",
 			})
 			return c.Status(http.StatusUnauthorized).JSON(authorizationHeaderError)
@@ -65,7 +64,7 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 		rptResult, err := kc.Keycloak.RetrospectToken(c.Context(), token, kc.ClientID, kc.ClientSecret, kc.Realm)
 		if err != nil || !*rptResult.Active {
 			invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
-				Code:    codes.AUTH_ERROR,
+				Code:    "AUTH_ERROR",
 				Message: "Invalid or expired token",
 			})
 			return c.Status(http.StatusUnauthorized).JSON(invalidTokenError)
@@ -73,7 +72,7 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 
 		if user, err := userHasRole(kc.ClientID, token, roles); err != nil {
 			unauthorizedRoleError := response.NewRestResponseError(span, response.ResponseError{
-				Code:    codes.AUTH_ERROR,
+				Code:    "AUTH_ERROR",
 				Message: err.Error(),
 			})
 			return c.Status(http.StatusUnauthorized).JSON(unauthorizedRoleError)

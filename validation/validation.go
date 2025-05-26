@@ -52,11 +52,6 @@ func ValidateRequest[T any](c *fiber.Ctx, span trace.Span, code string, customVa
 		})
 	}
 
-	_ = validate.RegisterValidation("notblank", func(fl validator.FieldLevel) bool {
-		val := fl.Field().String()
-		return strings.TrimSpace(val) != ""
-	})
-
 	if err := validate.Struct(entity); err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		validationErrors := err.(validator.ValidationErrors)
@@ -76,9 +71,6 @@ func ValidateRequest[T any](c *fiber.Ctx, span trace.Span, code string, customVa
 				}
 			}
 
-			if e.Tag() == "notblank" {
-				msg = e.Field() + " should not be empty"
-			}
 			restResponseError.AddError(span, response.ResponseError{Code: code, Message: msg})
 		}
 		return nil, restResponseError
@@ -103,5 +95,14 @@ func NewEnumValidator(tag, jsonField string, enums ...string) FuncCode {
 		return NewCustomValidator(tag, jsonField, func(fl validator.FieldLevel) bool {
 			return slices.Contains(enums, fl.Field().String())
 		})(code, fmt.Sprintf("Field %s must be one of %s", jsonField, strings.Join(enums, ", ")))
+	}
+}
+
+func NewNotBlankValidator(jsonField string) FuncCode {
+	return func(code string) customValidator {
+		return NewCustomValidator("notblank", jsonField, func(fl validator.FieldLevel) bool {
+			field := fl.Field()
+			return !field.IsNil() && strings.TrimSpace(field.String()) != ""
+		})(code, fmt.Sprintf("Field %s must be not be empty", jsonField))
 	}
 }

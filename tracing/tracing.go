@@ -3,6 +3,7 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -18,7 +19,7 @@ import (
 	oTrace "go.opentelemetry.io/otel/trace"
 )
 
-func StartTracing(host, appName string) (*trace.TracerProvider, error) {
+func StartTracing(appName string) (*trace.TracerProvider, error) {
 	headers := map[string]string{
 		"content-type": "application/json",
 	}
@@ -26,7 +27,7 @@ func StartTracing(host, appName string) (*trace.TracerProvider, error) {
 	exporter, err := otlptrace.New(
 		context.Background(),
 		otlptracehttp.NewClient(
-			otlptracehttp.WithEndpointURL(host),
+			otlptracehttp.WithEndpointURL(os.Getenv("TRACING_HOST")),
 			otlptracehttp.WithHeaders(headers),
 			otlptracehttp.WithInsecure(),
 		),
@@ -40,7 +41,6 @@ func StartTracing(host, appName string) (*trace.TracerProvider, error) {
 			exporter,
 			trace.WithMaxExportBatchSize(trace.DefaultMaxExportBatchSize),
 			trace.WithBatchTimeout(trace.DefaultScheduleDelay*time.Millisecond),
-			trace.WithMaxExportBatchSize(trace.DefaultMaxExportBatchSize),
 		),
 		trace.WithResource(
 			resource.NewWithAttributes(

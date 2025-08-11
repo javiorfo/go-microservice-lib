@@ -4,14 +4,11 @@ import (
 	"time"
 )
 
-// @Model Auditable
-// @Description creates data fields for recording auditory
-// @ID auditory.Auditable
 type Auditable struct {
-	CreatedBy      string     `json:"-" gorm:"not null" bson:"createdBy"`
-	LastModifiedBy *string    `json:"-" bson:"lastModifiedBy"`
-	CreateDate     time.Time  `json:"-" gorm:"autoCreateTime;not null" bson:"createDate"`
-	LastModified   *time.Time `json:"-" gorm:"autoUpdateTime" bson:"lastModified"`
+	CreatedBy        string     `gorm:"not null" bson:"createdBy"`
+	LastModifiedBy   *string    `bson:"lastModifiedBy"`
+	CreateDate       time.Time  `gorm:"autoCreateTime;not null" bson:"createDate"`
+	LastModifiedDate *time.Time `gorm:"autoUpdateTime" bson:"lastModifiedDate"`
 }
 
 func (Auditable) MapFieldToSQLColumn(fieldName string) string {
@@ -19,11 +16,19 @@ func (Auditable) MapFieldToSQLColumn(fieldName string) string {
 		"CreatedBy":      "created_by",
 		"CreateDate":     "create_date",
 		"LastModifiedBy": "last_modified_by",
-		"LastModified":   "last_modified",
+		"LastModified":   "last_modified_date",
 	}
 
 	if columnName, ok := fieldToColumnMap[fieldName]; ok {
 		return columnName
 	}
 	return fieldName
+}
+
+func (a *Auditable) Update(auditor *string) {
+	a.LastModifiedBy = auditor
+}
+
+func New(auditor string) Auditable {
+	return Auditable{CreatedBy: auditor}
 }

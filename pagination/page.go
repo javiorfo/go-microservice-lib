@@ -14,7 +14,16 @@ type Page struct {
 	SortOrder string
 }
 
-func ValidateAndGetPage(page, size, sortBy, sortOrder string) (*Page, error) {
+func DefaultPage() Page {
+	return Page{
+		Page:      1,
+		Size:      10,
+		SortBy:    "id",
+		SortOrder: "asc",
+	}
+}
+
+func NewPage(page, size, sortBy, sortOrder string) (*Page, error) {
 	p := Page{SortBy: sortBy}
 
 	if pageInt, err := strconv.Atoi(page); err != nil {

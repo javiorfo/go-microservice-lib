@@ -1,6 +1,6 @@
 module github.com/javiorfo/go-microservice-lib
 
-go 1.24.1
+go 1.24.6
 
 require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
@@ -13,7 +13,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/javiorfo/nilo v1.0.1
 	github.com/javiorfo/steams v1.4.0
-	github.com/joho/godotenv v1.5.1
 	github.com/testcontainers/testcontainers-go v0.36.0
 	go.mongodb.org/mongo-driver v1.17.3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
@@ -22,6 +21,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.28.0
 	go.opentelemetry.io/otel/sdk v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
+	gorm.io/gorm v1.30.1
 )
 
 require (
@@ -48,6 +48,8 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

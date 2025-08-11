@@ -23,16 +23,22 @@ type customValidator struct {
 	message   string
 }
 
-type FuncCode = func(string) customValidator
+type Tag string
+type JsonField string
 
-type FuncCodeAndMsg = func(string, string) customValidator
+type FuncCode = func(response.ErrorCode) customValidator
+type FuncCodeAndMessage = func(response.ErrorCode, response.Message) customValidator
 
-func ValidateRequest[T any](c *fiber.Ctx, span trace.Span, code string, customValidators ...customValidator) (*T, *response.RestResponseError) {
+func ValidateRequest[T any](c *fiber.Ctx, span trace.Span, code response.ErrorCode, customValidators ...customValidator) (*T, *response.ResponseError) {
 	entity := new(T)
 
 	if err := c.BodyParser(entity); err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return nil, response.NewRestResponseErrorWithCodeAndMsg(span, code, "Invalid Request Body")
+		return nil, response.NewResponseError(span, response.Error{
+			HttpStatus: fiber.StatusBadRequest,
+			Code:       code,
+			Message:    response.Message("Invalid Request Body"),
+		})
 	}
 
 	validate := validator.New()
@@ -56,8 +62,8 @@ func ValidateRequest[T any](c *fiber.Ctx, span trace.Span, code string, customVa
 		span.SetStatus(codes.Error, err.Error())
 		validationErrors := err.(validator.ValidationErrors)
 
-		restResponseError := &response.RestResponseError{
-			Errors: make([]response.ResponseError, 0),
+		restResponseError := &response.ResponseError{
+			Errors: make([]response.Error, 0),
 		}
 
 	errorsLoop:
@@ -66,43 +72,51 @@ func ValidateRequest[T any](c *fiber.Ctx, span trace.Span, code string, customVa
 
 			for _, cv := range customValidators {
 				if strings.Contains(msg, cv.message) {
-					restResponseError.AddError(span, response.ResponseError{Code: cv.code, Message: cv.message})
+					restResponseError.Add(span, response.Error{
+						HttpStatus: fiber.StatusBadRequest,
+						Code:       response.ErrorCode(cv.code),
+						Message:    response.Message(cv.message),
+					})
 					continue errorsLoop
 				}
 			}
 
-			restResponseError.AddError(span, response.ResponseError{Code: code, Message: msg})
+			restResponseError.Add(span, response.Error{
+				HttpStatus: fiber.StatusBadRequest,
+				Code:       response.ErrorCode(code),
+				Message:    response.Message(msg),
+			})
 		}
 		return nil, restResponseError
 	}
 	return entity, nil
 }
 
-func NewCustomValidator(tag, jsonField string, validate validator.Func) FuncCodeAndMsg {
-	return func(code, message string) customValidator {
+func NewCustomValidator(tag Tag, jsonField JsonField, validate validator.Func) FuncCodeAndMessage {
+	return func(errorCode response.ErrorCode, message response.Message) customValidator {
 		return customValidator{
-			tag:       tag,
-			jsonField: jsonField,
+			tag:       string(tag),
+			jsonField: string(jsonField),
 			validate:  validate,
-			code:      code,
-			message:   message,
+			code:      string(errorCode),
+			message:   string(message),
 		}
 	}
 }
 
-func NewEnumValidator(tag, jsonField string, enums ...string) FuncCode {
-	return func(code string) customValidator {
+func NewEnumValidator(tag Tag, jsonField JsonField, enums ...string) FuncCode {
+	return func(errorCode response.ErrorCode) customValidator {
 		return NewCustomValidator(tag, jsonField, func(fl validator.FieldLevel) bool {
 			return slices.Contains(enums, fl.Field().String())
-		})(code, fmt.Sprintf("Field %s must be one of %s", jsonField, strings.Join(enums, ", ")))
+		})(errorCode, response.Message(fmt.Sprintf("Field %s must be one of %s", jsonField, strings.Join(enums, ", "))))
 	}
 }
 
-func NewNotBlankValidator(jsonField string) FuncCode {
-	return func(code string) customValidator {
+func NewNotBlankValidator(jsonField JsonField) FuncCode {
+	return func(errorCode response.ErrorCode) customValidator {
 		return NewCustomValidator("notblank", jsonField, func(fl validator.FieldLevel) bool {
 			field := fl.Field()
 			return !field.IsNil() && strings.TrimSpace(field.String()) != ""
-		})(code, fmt.Sprintf("Field %s must be not be empty", jsonField))
+		})(errorCode, response.Message(fmt.Sprintf("Field %s must be not be empty", jsonField)))
 	}
 }

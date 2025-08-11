@@ -53,7 +53,7 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 
 		authHeader := c.Get("Authorization")
 		if authHeader == "" || !strings.Contains(authHeader, "Bearer") {
-			authorizationHeaderError := response.NewRestResponseError(span, response.ResponseError{
+			authorizationHeaderError := response.NewResponseError(span, response.Error{
 				Code:    "AUTH_ERROR",
 				Message: "Authorization header or Bearer missing",
 			})
@@ -63,7 +63,7 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		rptResult, err := kc.Keycloak.RetrospectToken(c.Context(), token, kc.ClientID, kc.ClientSecret, kc.Realm)
 		if err != nil || !*rptResult.Active {
-			invalidTokenError := response.NewRestResponseError(span, response.ResponseError{
+			invalidTokenError := response.NewResponseError(span, response.Error{
 				Code:    "AUTH_ERROR",
 				Message: "Invalid or expired token",
 			})
@@ -71,9 +71,9 @@ func (kc KeycloakConfig) Secure(roles ...string) fiber.Handler {
 		}
 
 		if user, err := userHasRole(kc.ClientID, token, roles); err != nil {
-			unauthorizedRoleError := response.NewRestResponseError(span, response.ResponseError{
+			unauthorizedRoleError := response.NewResponseError(span, response.Error{
 				Code:    "AUTH_ERROR",
-				Message: err.Error(),
+				Message: response.Message(err.Error()),
 			})
 			return c.Status(http.StatusUnauthorized).JSON(unauthorizedRoleError)
 		} else {

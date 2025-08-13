@@ -17,11 +17,16 @@ type tagAndValue struct {
 }
 
 type QueryFilter interface {
-	Filter(*gorm.DB) (*gorm.DB, error)
+	PaginateAndFilter(*gorm.DB) (*gorm.DB, error)
+	FilterOnly(*gorm.DB) (*gorm.DB, error)
 }
 
-func Builder[T QueryFilter](db *gorm.DB, page Page, queryFilter T) (*gorm.DB, error) {
+func PaginateAndFilter[T QueryFilter](db *gorm.DB, page Page, queryFilter T) (*gorm.DB, error) {
 	return filterValues(paginate(db, page), queryFilter)
+}
+
+func FilterOnly[T QueryFilter](db *gorm.DB, queryFilter T) (*gorm.DB, error) {
+	return filterValues(db, queryFilter)
 }
 
 func paginate(db *gorm.DB, p Page) *gorm.DB {

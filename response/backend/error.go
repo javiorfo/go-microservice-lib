@@ -13,11 +13,11 @@ type Error interface {
 	ToResponse(c *fiber.Ctx) error
 }
 
-func GenericError(span trace.Span, err error) Error {
-	return GenericMsgError(span, err.Error())
+func InternalError(span trace.Span, err error) Error {
+	return InternalMsgError(span, err.Error())
 }
 
-func GenericMsgError(span trace.Span, msg string) Error {
+func InternalMsgError(span trace.Span, msg string) Error {
 	return response.NewResponseError(span,
 		response.Error{
 			HttpStatus: http.StatusInternalServerError,

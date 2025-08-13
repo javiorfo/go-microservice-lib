@@ -46,7 +46,7 @@ func NewPage(page, size, sortBy, sortOrder string) (*Page, error) {
 	}
 }
 
-func Paginator(p Page, total int) response.Pagination {
+func Paginator(p Page, total int64) response.Pagination {
 	return response.Pagination{
 		PageNumber: p.Page,
 		PageSize:   p.Size,

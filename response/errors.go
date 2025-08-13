@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type ErrorCode string
-type Message string
+type ErrorCode = string
+type Message = string
 
 // Error represents an error
 type Error struct {

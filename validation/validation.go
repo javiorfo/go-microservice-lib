@@ -16,15 +16,15 @@ import (
 )
 
 type customValidator struct {
-	tag       string
-	jsonField string
+	tag       Tag
+	jsonField JsonField
 	validate  validator.Func
 	code      string
 	message   string
 }
 
-type Tag string
-type JsonField string
+type Tag = string
+type JsonField = string
 
 type FuncCode = func(response.ErrorCode) customValidator
 type FuncCodeAndMessage = func(response.ErrorCode, response.Message) customValidator
@@ -95,11 +95,11 @@ func ValidateRequest[T any](c *fiber.Ctx, span trace.Span, code response.ErrorCo
 func NewCustomValidator(tag Tag, jsonField JsonField, validate validator.Func) FuncCodeAndMessage {
 	return func(errorCode response.ErrorCode, message response.Message) customValidator {
 		return customValidator{
-			tag:       string(tag),
-			jsonField: string(jsonField),
+			tag:       tag,
+			jsonField: jsonField,
 			validate:  validate,
-			code:      string(errorCode),
-			message:   string(message),
+			code:      errorCode,
+			message:   message,
 		}
 	}
 }
@@ -108,15 +108,14 @@ func NewEnumValidator(tag Tag, jsonField JsonField, enums ...string) FuncCode {
 	return func(errorCode response.ErrorCode) customValidator {
 		return NewCustomValidator(tag, jsonField, func(fl validator.FieldLevel) bool {
 			return slices.Contains(enums, fl.Field().String())
-		})(errorCode, response.Message(fmt.Sprintf("Field %s must be one of %s", jsonField, strings.Join(enums, ", "))))
+		})(errorCode, fmt.Sprintf("Field %s must be one of %s", jsonField, strings.Join(enums, ", ")))
 	}
 }
 
 func NewNotBlankValidator(jsonField JsonField) FuncCode {
 	return func(errorCode response.ErrorCode) customValidator {
 		return NewCustomValidator("notblank", jsonField, func(fl validator.FieldLevel) bool {
-			field := fl.Field()
-			return !field.IsNil() && strings.TrimSpace(field.String()) != ""
-		})(errorCode, response.Message(fmt.Sprintf("Field %s must be not be empty", jsonField)))
+			return strings.TrimSpace(fl.Field().String()) != ""
+		})(errorCode, fmt.Sprintf("Field %s must be not be empty", jsonField))
 	}
 }

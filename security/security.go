@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type Securizer interface {
+type Authorizer interface {
 	Secure(roles ...string) fiber.Handler
 }
 

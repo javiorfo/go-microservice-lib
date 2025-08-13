@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"runtime"
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	oTrace "go.opentelemetry.io/otel/trace"
 )
 
 func StartTracing(appName string) (*trace.TracerProvider, error) {
@@ -27,7 +24,7 @@ func StartTracing(appName string) (*trace.TracerProvider, error) {
 	exporter, err := otlptrace.New(
 		context.Background(),
 		otlptracehttp.NewClient(
-			otlptracehttp.WithEndpointURL(os.Getenv("TRACING_HOST")),
+			otlptracehttp.WithEndpoint(os.Getenv("TRACING_HOST")),
 			otlptracehttp.WithHeaders(headers),
 			otlptracehttp.WithInsecure(),
 		),
@@ -58,16 +55,4 @@ func StartTracing(appName string) (*trace.TracerProvider, error) {
 
 func GetContextPropagator(c *fiber.Ctx) context.Context {
 	return otel.GetTextMapPropagator().Extract(c.UserContext(), propagation.HeaderCarrier(c.GetReqHeaders()))
-}
-
-func LogTraceAndSpan(span oTrace.Span) string {
-	return fmt.Sprintf("[traceID: %s, spanID: %s]", span.SpanContext().TraceID(), span.SpanContext().SpanID())
-}
-
-func Name() string {
-	pc, _, _, _ := runtime.Caller(1)
-	funcName := runtime.FuncForPC(pc).Name()
-	lastPeriodIndex := strings.LastIndex(funcName, ".")
-	s, _ := strings.CutPrefix(funcName[lastPeriodIndex+1:], "New")
-	return s
 }

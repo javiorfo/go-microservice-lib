@@ -12,16 +12,29 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/javiorfo/go-microservice-lib/response"
+	"github.com/javiorfo/go-microservice-lib/tracing"
 	"github.com/javiorfo/steams"
+	"go.opentelemetry.io/otel"
 )
 
-type TokenConfig struct {
-	SecretKey []byte
-	Issuer    string
-	Enabled   bool
+var tokenTracer = otel.Tracer("TokenSecurity")
+
+type TokenSecurity struct {
+	Enabled bool
+}
+
+func NewTokenSecurity() TokenSecurity {
+	var isEnabled = true
+	securityEnabled := os.Getenv("SECURITY_ENABLED")
+
+	if securityEnabled != "" {
+		isEnabled = strings.ToLower(securityEnabled) == "true"
+	}
+	return TokenSecurity{isEnabled}
 }
 
 type TokenClaims struct {
@@ -37,12 +50,13 @@ type TokenPermission struct {
 
 // Secure method with role validation. If no role is specified
 // no role validation is executed
-func (t TokenConfig) Secure(roles ...string) fiber.Handler {
+func (t TokenSecurity) Secure(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		_, span := keycloakTracer.Start(c.UserContext(), "secure")
+		_, span := tokenTracer.Start(c.UserContext(), "JWT Security")
 		defer span.End()
 
 		if !t.Enabled {
+			log.Infof("%s security enabled!", tracing.Log(span))
 			return c.Next()
 		}
 
@@ -57,7 +71,7 @@ func (t TokenConfig) Secure(roles ...string) fiber.Handler {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (any, error) {
-			return t.SecretKey, nil
+			return []byte(os.Getenv("JWT_SECRET_KEY")), nil
 		})
 
 		if err != nil || !token.Valid {

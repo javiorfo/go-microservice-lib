@@ -1,9 +1,12 @@
 package response
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/javiorfo/go-microservice-lib/tracing"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -17,27 +20,46 @@ type Error struct {
 	Message    Message   `json:"message"`
 }
 
+// Stringer interface implementation
+func (e Error) String() string {
+	return fmt.Sprintf("ERROR CODE: %s. MESSAGE: %s", e.Code, e.Message)
+}
+
 // ResponseError represents an array of errors
 type ResponseError struct {
 	Errors []Error `json:"errors"`
 }
 
+// Get the first error if exists
+func (re ResponseError) Get() Error {
+	if len(re.Errors) == 0 {
+		return Error{}
+	}
+	return re.Errors[0]
+}
+
 // Método para responder el error con Fiber (implementa inteface backend.Error)
 func (re *ResponseError) ToResponse(c *fiber.Ctx) error {
-	status := re.Errors[0].HttpStatus
+	status := re.Get().HttpStatus
 	return c.Status(status).JSON(re)
 }
 
 // Add adds an error to ResponseError and logs it
 func (rre *ResponseError) Add(span trace.Span, e Error) *ResponseError {
-	log.Errorf("%s Code: %s Message: %s", tracing.LogTraceAndSpan(span), e.Code, e.Message)
+	msg := e.String()
+	log.Errorf("%s%s", tracing.Log(span), msg)
+	span.SetStatus(codes.Error, msg)
+
 	rre.Errors = append(rre.Errors, e)
 	return rre
 }
 
 // NewResponseError creates an error to ResponseError and logs it
 func NewResponseError(span trace.Span, e Error) *ResponseError {
-	log.Errorf("%s Code: %s Message: %s", tracing.LogTraceAndSpan(span), e.Code, e.Message)
+	msg := e.String()
+	log.Errorf("%s%s", tracing.Log(span), msg)
+	span.SetStatus(codes.Error, msg)
+
 	return &ResponseError{
 		Errors: []Error{e},
 	}

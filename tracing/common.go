@@ -5,14 +5,28 @@ import (
 	"runtime"
 	"strings"
 
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func Log(span trace.Span) string {
-	if span.SpanContext().HasTraceID() && span.SpanContext().HasSpanID() {
-		return fmt.Sprintf("[traceID: %s, spanID: %s] ", span.SpanContext().TraceID(), span.SpanContext().SpanID())
+func LogError(span trace.Span, msg string) string {
+	return log(span, msg, true)
+}
+
+func LogInfo(span trace.Span, msg string) string {
+	return log(span, msg, false)
+}
+
+func log(span trace.Span, msg string, isError bool) string {
+	if span.SpanContext().IsValid() {
+		if isError {
+			span.SetStatus(codes.Error, msg)
+		} else {
+			span.AddEvent(msg)
+		}
+		return fmt.Sprintf("[traceID: %s, spanID: %s] %s", span.SpanContext().TraceID(), span.SpanContext().SpanID(), msg)
 	}
-	return ""
+	return msg
 }
 
 func Name() string {

@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Interface para responder con Fiber
+// Interface for Fiber response
 type Error interface {
 	ToResponse(c *fiber.Ctx) error
 }

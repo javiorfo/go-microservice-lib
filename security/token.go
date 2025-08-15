@@ -56,7 +56,7 @@ func (t TokenSecurity) Secure(roles ...string) fiber.Handler {
 		defer span.End()
 
 		if !t.Enabled {
-			log.Infof("%s security enabled!", tracing.Log(span))
+			log.Warn(tracing.LogInfo(span, "security disabled!"))
 			return c.Next()
 		}
 

@@ -16,39 +16,39 @@ type Response[T any] struct {
 	Headers    http.Header
 }
 
-func (r Response[T]) ValueFromJsonField(jsonField string) nilo.Optional[any] {
+func (r Response[T]) ValueFromJsonField(jsonField string) nilo.Option[any] {
 	if r.Data == nil {
-		return nilo.Empty[any]()
+		return nilo.None[any]()
 	}
 
 	mapper, isRawData := any(*r.Data).(RawData)
 	if !isRawData {
-		return nilo.Empty[any]()
+		return nilo.None[any]()
 	}
 
 	result, ok := mapper[jsonField]
 	if !ok {
-		return nilo.Empty[any]()
+		return nilo.None[any]()
 	}
 
-	return nilo.Of(result)
+	return nilo.Some(result)
 }
 
-func (r Response[T]) ErrorToJson() nilo.Optional[string] {
+func (r Response[T]) ErrorToJson() nilo.Option[string] {
 	if r.Error == nil {
-		return nilo.Empty[string]()
+		return nilo.None[string]()
 	}
 	jsonBytes, err := json.Marshal(r.Error)
 	if err != nil {
-		return nilo.Empty[string]()
+		return nilo.None[string]()
 	}
-	return nilo.Of(string(jsonBytes))
+	return nilo.Some(string(jsonBytes))
 }
 
-func (r Response[T]) DataToJson() nilo.Optional[string] {
+func (r Response[T]) DataToJson() nilo.Option[string] {
 	jsonBytes, err := json.Marshal(*r.Data)
 	if err != nil {
-		return nilo.Empty[string]()
+		return nilo.None[string]()
 	}
-	return nilo.Of(string(jsonBytes))
+	return nilo.Some(string(jsonBytes))
 }

@@ -1,5 +1,7 @@
 package response
 
+import "strconv"
+
 // PaginationResponse represents pagination details
 type Pagination struct {
 	PageNumber int   `json:"pageNumber"`
@@ -13,6 +15,13 @@ type PaginationResponse[T any] struct {
 	Elements   []T        `json:"elements"`
 }
 
-func NewPaginationResponse[T any](pagination Pagination, Elements []T) PaginationResponse[T] {
-	return PaginationResponse[T]{pagination, Elements}
+func NewPaginationResponse[T any](pageNumber, pageSize string, total int64, Elements []T) PaginationResponse[T] {
+	pn, _ := strconv.Atoi(pageNumber)
+	ps, _ := strconv.Atoi(pageSize)
+	p := Pagination{
+		PageNumber: pn,
+		PageSize:   ps,
+		Total:      total,
+	}
+	return PaginationResponse[T]{p, Elements}
 }

@@ -43,6 +43,13 @@ func (re *ResponseError) ToResponse(c *fiber.Ctx) error {
 	return c.Status(status).JSON(re)
 }
 
+func (re ResponseError) Error() string {
+	if len(re.Errors) == 0 {
+		return "unknown error"
+	}
+	return re.Errors[0].Message
+}
+
 // Add adds an error to ResponseError and logs it
 func (rre *ResponseError) Add(span trace.Span, e Error) *ResponseError {
 	log.Error(tracing.LogError(span, e.String()))

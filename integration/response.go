@@ -18,37 +18,37 @@ type Response[T any] struct {
 
 func (r Response[T]) ValueFromJsonField(jsonField string) nilo.Option[any] {
 	if r.Data == nil {
-		return nilo.None[any]()
+		return nilo.Nil[any]()
 	}
 
 	mapper, isRawData := any(*r.Data).(RawData)
 	if !isRawData {
-		return nilo.None[any]()
+		return nilo.Nil[any]()
 	}
 
 	result, ok := mapper[jsonField]
 	if !ok {
-		return nilo.None[any]()
+		return nilo.Nil[any]()
 	}
 
-	return nilo.Some(result)
+	return nilo.Value(result)
 }
 
 func (r Response[T]) ErrorToJson() nilo.Option[string] {
 	if r.Error == nil {
-		return nilo.None[string]()
+		return nilo.Nil[string]()
 	}
 	jsonBytes, err := json.Marshal(r.Error)
 	if err != nil {
-		return nilo.None[string]()
+		return nilo.Nil[string]()
 	}
-	return nilo.Some(string(jsonBytes))
+	return nilo.Value(string(jsonBytes))
 }
 
 func (r Response[T]) DataToJson() nilo.Option[string] {
 	jsonBytes, err := json.Marshal(*r.Data)
 	if err != nil {
-		return nilo.None[string]()
+		return nilo.Nil[string]()
 	}
-	return nilo.Some(string(jsonBytes))
+	return nilo.Value(string(jsonBytes))
 }

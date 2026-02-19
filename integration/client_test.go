@@ -77,7 +77,7 @@ func TestIntegrationPost(t *testing.T) {
 	}
 
 	optional := resp.ValueFromJsonField("title")
-	if optional.IsNone() {
+	if optional.IsNil() {
 		t.Error("title json property must be 'test'")
 	}
 

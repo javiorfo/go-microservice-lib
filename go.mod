@@ -9,7 +9,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.6.0
-	github.com/javiorfo/nilo v1.1.0
+	github.com/javiorfo/nilo v1.6.0
 	github.com/javiorfo/steams v1.5.0
 	github.com/testcontainers/testcontainers-go v0.36.0
 	go.mongodb.org/mongo-driver v1.17.3

@@ -51,9 +51,9 @@ func (a *asyncClient) Execute(r Request) {
 			resp, err := a.client.Send(r)
 
 			if err != nil || resp.Error != nil {
-				_, errStr := nilo.SomePtr(resp).MapToString(func(r Response[RawData]) string {
-					return r.ErrorToJson().UnwrapOr("No error response available")
-				}).OkOr(err)
+				_, errStr := nilo.Ptr(resp).MapToString(func(r Response[RawData]) string {
+					return r.ErrorToJson().Or("No error response available")
+				}).OrError(nilo.ReturnError(err))
 
 				log.Errorf("async %s. Try %d. Error executing request: %v", code, i+1, errStr)
 
@@ -66,7 +66,7 @@ func (a *asyncClient) Execute(r Request) {
 				continue
 			}
 
-			if err = a.update(r.ctx, model, "OK", resp.DataToJson().UnwrapOr("No response available")); err != nil {
+			if err = a.update(r.ctx, model, "OK", resp.DataToJson().Or("No response available")); err != nil {
 				log.Errorf("async %s. Try %d. Error updating mongo model: %v", code, i+1, err)
 			} else {
 				log.Infof("async %s. Try %d. Succeded", code, i+1)

@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/javiorfo/go-microservice-lib/response"
 	"github.com/javiorfo/go-microservice-lib/tracing"
-	"github.com/javiorfo/steams"
+	"github.com/javiorfo/steams/v2"
 	"go.opentelemetry.io/otel"
 )
 
@@ -107,7 +107,7 @@ func (t TokenSecurity) Secure(roles ...string) fiber.Handler {
 }
 
 func hasRole(permission TokenPermission, roles []string) bool {
-	return steams.OfSlice(roles).AnyMatch(func(r string) bool {
+	return steams.FromSlice(roles).Any(func(r string) bool {
 		return slices.Contains(permission.Roles, r)
 	})
 }

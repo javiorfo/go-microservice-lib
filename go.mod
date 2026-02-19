@@ -10,7 +10,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.6.0
 	github.com/javiorfo/nilo v1.6.0
-	github.com/javiorfo/steams v1.5.0
+	github.com/javiorfo/steams/v2 v2.0.0
 	github.com/testcontainers/testcontainers-go v0.36.0
 	go.mongodb.org/mongo-driver v1.17.3
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0

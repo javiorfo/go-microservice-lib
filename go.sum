@@ -71,8 +71,8 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 h1:X5VWvz21y3gzm9Nw/kaUeku/1+u
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1/go.mod h1:Zanoh4+gvIgluNqcfMVTJueD4wSS5hT7zTt4Mrutd90=
 github.com/javiorfo/nilo v1.6.0 h1:jxRVUm67OfVMI7SNUIp1MJLxo9tqZ13x54+x4UT0TKg=
 github.com/javiorfo/nilo v1.6.0/go.mod h1:cJBBOCqyc+87XmxDyJrenoIfhUkjsb07RRyNZOMJe90=
-github.com/javiorfo/steams v1.5.0 h1:TfWx0yMqr8oPQxIyqEym1Qu8+6pXyo5Z4pSg+1cdP7I=
-github.com/javiorfo/steams v1.5.0/go.mod h1:Pg5i6X1459CyUir9E2eYeLlc3uJtKWTcyiaomEFqLYE=
+github.com/javiorfo/steams/v2 v2.0.0 h1:ysifnPfGX1JTe0Xj4qVZP3GNe/PBYD7RyVewwoytdt4=
+github.com/javiorfo/steams/v2 v2.0.0/go.mod h1:J0mQycMP45vZoG9+b8/HC+J3pGsgyTik+pyPgHq7akc=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/klauspost/compress v1.17.4 h1:Ej5ixsIri7BrIjBkRZLTo6ghwrEtHFk7ijlczPW4fZ4=
